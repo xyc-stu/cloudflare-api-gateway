@@ -32,11 +32,6 @@
     "head_sampling_rate": 1
   },
 
-  "limits": {
-    "cpu_ms": 50,
-    "memory_mb": 128
-  },
-
   "env": {
     "development": {
       "name": "cloudflare-api-gateway-dev",
