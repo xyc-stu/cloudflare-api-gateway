@@ -1,0 +1,54 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "cloudflare-api-gateway",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-04-01",
+  "compatibility_flags": ["nodejs_compat"],
+  
+  "vars": {
+    "ENVIRONMENT": "production",
+    "API_VERSION": "v1",
+    "JWT_ISSUER": "cloudflare-api-gateway",
+    "JWT_AUDIENCE": "api-users"
+  },
+
+  "kv_namespaces": [
+    {
+      "binding": "RATE_LIMIT_STORE",
+      "id": "rate_limit_kv"
+    },
+    {
+      "binding": "SESSION_STORE",
+      "id": "session_kv"
+    },
+    {
+      "binding": "CACHE_STORE",
+      "id": "cache_kv"
+    }
+  ],
+
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  },
+
+  "limits": {
+    "cpu_ms": 50,
+    "memory_mb": 128
+  },
+
+  "env": {
+    "development": {
+      "name": "cloudflare-api-gateway-dev",
+      "vars": {
+        "ENVIRONMENT": "development"
+      }
+    },
+    "staging": {
+      "name": "cloudflare-api-gateway-staging",
+      "vars": {
+        "ENVIRONMENT": "staging"
+      }
+    }
+  }
+}

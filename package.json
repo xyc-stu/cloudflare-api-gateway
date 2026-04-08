@@ -1,0 +1,39 @@
+{
+  "name": "cloudflare-api-gateway",
+  "version": "1.0.0",
+  "description": "A production-ready API Gateway built on Cloudflare Workers with JWT authentication, rate limiting, and KV storage",
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "build": "tsc",
+    "check": "tsc --noEmit",
+    "lint": "eslint src/**/*.ts",
+    "format": "prettier --write src/**/*.ts",
+    "types": "wrangler types"
+  },
+  "keywords": [
+    "cloudflare",
+    "workers",
+    "api-gateway",
+    "typescript",
+    "serverless",
+    "edge-computing"
+  ],
+  "author": "xyc-stu",
+  "license": "MIT",
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250321.0",
+    "@types/node": "^20.11.0",
+    "typescript": "^5.4.0",
+    "wrangler": "^3.101.0"
+  },
+  "dependencies": {
+    "hono": "^4.7.0",
+    "jose": "^5.9.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
