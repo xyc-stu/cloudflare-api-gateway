@@ -15,15 +15,15 @@
   "kv_namespaces": [
     {
       "binding": "RATE_LIMIT_STORE",
-      "id": "rate_limit_kv"
+      "id": "9c8c58e2a9b34d1f82a520b1aa40261b"
     },
     {
       "binding": "SESSION_STORE",
-      "id": "session_kv"
+      "id": "c2ea590732f24fddbf14c29b9b8e3921"
     },
     {
       "binding": "CACHE_STORE",
-      "id": "cache_kv"
+      "id": "06cecd6e782b4c56b0cd226eb6b6e83a"
     }
   ],
 
