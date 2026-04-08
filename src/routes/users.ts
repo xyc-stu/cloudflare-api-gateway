@@ -66,7 +66,14 @@ app.patch('/me', async (c) => {
 /**
  * List all users (admin only)
  */
-app.get('/', requireAdmin(), (c) => {
+app.get('/', (c) => {
+  const currentUser = c.get('user');
+  
+  // Check if user is admin
+  if (!currentUser || currentUser.role !== 'admin') {
+    throw new NotFoundException('User not found');
+  }
+  
   const url = new URL(c.req.url);
   const { page, limit } = parsePagination(url);
   

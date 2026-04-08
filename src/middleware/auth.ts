@@ -23,7 +23,7 @@ export function createAuthMiddleware(): MiddlewareHandler<{
     
     try {
       const token = extractToken(authHeader);
-      const payload = await verifyJWT(token, c.env);
+      const payload = await verifyJWT(token);
       const user = payloadToUser(payload);
       
       // Set user in context
@@ -52,7 +52,7 @@ export function createOptionalAuthMiddleware(): MiddlewareHandler<{
     if (authHeader) {
       try {
         const token = extractToken(authHeader);
-        const payload = await verifyJWT(token, c.env);
+        const payload = await verifyJWT(token);
         const user = payloadToUser(payload);
         c.set('user', user);
       } catch {

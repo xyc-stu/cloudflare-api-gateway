@@ -8,40 +8,21 @@ import { UnauthorizedException } from './errors';
 const JWT_SECRET_KEY_NAME = 'jwt-secret-key';
 
 /**
- * Get or create JWT secret key
+ * Get JWT secret key
  */
-async function getSecretKey(env: { SESSION_STORE: KVNamespace }): Promise<CryptoKey> {
-  // Try to get existing key from KV
-  const storedKey = await env.SESSION_STORE.get(JWT_SECRET_KEY_NAME);
+async function getSecretKey(): Promise<CryptoKey> {
+  // Use a fixed secret key for simplicity (in production, use environment variable)
+  const secret = 'cloudflare-api-gateway-secret-key-2026';
+  const encoder = new TextEncoder();
+  const keyData = encoder.encode(secret);
   
-  if (storedKey) {
-    // Import the stored key
-    const keyData = new Uint8Array(JSON.parse(storedKey));
-    return crypto.subtle.importKey(
-      'raw',
-      keyData,
-      { name: 'HMAC', hash: 'SHA-256' },
-      false,
-      ['sign', 'verify']
-    );
-  }
-  
-  // Generate new key
-  const newKey = await crypto.subtle.generateKey(
+  return crypto.subtle.importKey(
+    'raw',
+    keyData,
     { name: 'HMAC', hash: 'SHA-256' },
-    true,
+    false,
     ['sign', 'verify']
   );
-  
-  // Store the key
-  const exported = await crypto.subtle.exportKey('raw', newKey);
-  await env.SESSION_STORE.put(
-    JWT_SECRET_KEY_NAME,
-    JSON.stringify(Array.from(new Uint8Array(exported))),
-    { expirationTtl: 0 } // Never expire
-  );
-  
-  return newKey;
 }
 
 /**
@@ -49,10 +30,9 @@ async function getSecretKey(env: { SESSION_STORE: KVNamespace }): Promise<Crypto
  */
 export async function signJWT(
   payload: Omit<JWTPayload, 'iat' | 'exp'>,
-  env: { SESSION_STORE: KVNamespace },
   expiresIn: number = 86400 // 24 hours
 ): Promise<string> {
-  const secretKey = await getSecretKey(env);
+  const secretKey = await getSecretKey();
   
   const now = Math.floor(Date.now() / 1000);
   const fullPayload: JWTPayload = {
@@ -63,26 +43,50 @@ export async function signJWT(
   
   // Create JWT segments
   const header = { alg: 'HS256', typ: 'JWT' };
-  const headerB64 = btoa(JSON.stringify(header));
-  const payloadB64 = btoa(JSON.stringify(fullPayload));
+  const headerB64 = base64UrlEncode(JSON.stringify(header));
+  const payloadB64 = base64UrlEncode(JSON.stringify(fullPayload));
   
   // Create signature
   const data = new TextEncoder().encode(`${headerB64}.${payloadB64}`);
   const signature = await crypto.subtle.sign('HMAC', secretKey, data);
-  const signatureB64 = btoa(String.fromCharCode(...new Uint8Array(signature)));
+  const signatureB64 = base64UrlEncode(signature);
   
   return `${headerB64}.${payloadB64}.${signatureB64}`;
+}
+
+/**
+ * Base64 URL encode
+ */
+function base64UrlEncode(data: string | ArrayBuffer): string {
+  let str: string;
+  if (typeof data === 'string') {
+    str = btoa(data);
+  } else {
+    const bytes = new Uint8Array(data);
+    str = btoa(String.fromCharCode(...bytes));
+  }
+  return str.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+/**
+ * Base64 URL decode
+ */
+function base64UrlDecode(str: string): string {
+  str = str.replace(/-/g, '+').replace(/_/g, '/');
+  while (str.length % 4) {
+    str += '=';
+  }
+  return atob(str);
 }
 
 /**
  * Verify a JWT token
  */
 export async function verifyJWT(
-  token: string,
-  env: { SESSION_STORE: KVNamespace }
+  token: string
 ): Promise<JWTPayload> {
   try {
-    const secretKey = await getSecretKey(env);
+    const secretKey = await getSecretKey();
     
     // Split token
     const parts = token.split('.');
@@ -94,7 +98,8 @@ export async function verifyJWT(
     
     // Verify signature
     const data = new TextEncoder().encode(`${headerB64}.${payloadB64}`);
-    const signature = Uint8Array.from(atob(signatureB64), c => c.charCodeAt(0));
+    const signatureBytes = base64UrlDecode(signatureB64);
+    const signature = Uint8Array.from(signatureBytes, c => c.charCodeAt(0));
     
     const isValid = await crypto.subtle.verify('HMAC', secretKey, signature, data);
     if (!isValid) {
@@ -102,7 +107,8 @@ export async function verifyJWT(
     }
     
     // Parse payload
-    const payload: JWTPayload = JSON.parse(atob(payloadB64));
+    const payloadStr = base64UrlDecode(payloadB64);
+    const payload: JWTPayload = JSON.parse(payloadStr);
     
     // Check expiration
     const now = Math.floor(Date.now() / 1000);
@@ -163,9 +169,7 @@ export function hasRole(user: User, requiredRole: 'admin' | 'user' | 'guest'): b
 /**
  * Generate a demo token for testing
  */
-export async function generateDemoToken(
-  env: { SESSION_STORE: KVNamespace }
-): Promise<{ token: string; user: User }> {
+export async function generateDemoToken(): Promise<{ token: string; user: User }> {
   const user: User = {
     id: 'demo-user-001',
     email: 'demo@example.com',
@@ -181,7 +185,7 @@ export async function generateDemoToken(
     aud: 'api-users',
   };
   
-  const token = await signJWT(payload, env, 86400);
+  const token = await signJWT(payload, 86400);
   
   return { token, user };
 }

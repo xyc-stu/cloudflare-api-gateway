@@ -43,7 +43,7 @@ app.post('/login', async (c) => {
     role: user.role,
     iss: c.env.JWT_ISSUER,
     aud: c.env.JWT_AUDIENCE,
-  }, c.env, 86400);
+  }, 86400);
   
   return c.json(createResponse({
     token,
@@ -84,7 +84,7 @@ app.post('/register', async (c) => {
     role: user.role,
     iss: c.env.JWT_ISSUER,
     aud: c.env.JWT_AUDIENCE,
-  }, c.env, 86400);
+  }, 86400);
   
   return c.json(createResponse({
     token,
@@ -97,7 +97,7 @@ app.post('/register', async (c) => {
  * Get demo token (for testing)
  */
 app.get('/demo-token', async (c) => {
-  const { token, user } = await generateDemoToken(c.env);
+  const { token, user } = await generateDemoToken();
   
   return c.json(createResponse({
     token,
@@ -123,7 +123,7 @@ app.post('/refresh', async (c) => {
     role: user.role,
     iss: c.env.JWT_ISSUER,
     aud: c.env.JWT_AUDIENCE,
-  }, c.env, 86400);
+  }, 86400);
   
   return c.json(createResponse({
     token,
